@@ -30,11 +30,11 @@ class Controller(object):
                                             max_steer_angle)
 
         # control throttle
-        kp = 0.3
-        ki = 0.1
+        kp = 0.5
+        ki = 0.00001
         kd = 0.0
         throttle_min = 0.0
-        throttle_max = 0.2
+        throttle_max = 1.0
         self.throttle_controller = PID(kp, ki, kd, throttle_min, throttle_max)
 
         # smooth out velocity
