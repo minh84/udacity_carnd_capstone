@@ -20,7 +20,7 @@ def createPose(x, y, frame_id):
     pose.pose.orientation.w = 0
     return pose
 
-MAP_FRAME_ID = "wp_maps"
+MAP_FRAME_ID = "/world"
 
 class CarndRviz(object):
     def __init__(self):
