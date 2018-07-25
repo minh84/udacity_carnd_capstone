@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="use_ground_truth" default="false" />
+
+    <!-- Use Styx Launch -->
+    <include file="launch/styx.launch" />
+
+    <!-- Carnd Visualization -->
+    <include file="$(find carnd_rviz)/launch/carnd_rviz.launch" />
+
+</launch>
