@@ -29,7 +29,8 @@ class CarndRviz(object):
         # get base waypoints
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
-        # publish base waypoints (see http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers#rospy.Publisher_initialization)
+        # publish a path of base waypoints
+        # (see http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers#rospy.Publisher_initialization)
         self._path_pub = rospy.Publisher('/carnd_rviz/base_waypoints', Path, queue_size=1, latch=True)
 
         # init member
@@ -44,12 +45,12 @@ class CarndRviz(object):
         while not rospy.is_shutdown():
             rate.sleep()
 
-    def waypoints_cb(self, waypoints):
+    def waypoints_cb(self, lane):
         if self._base_path is None:
             self._base_path = Path()
             self._base_path.header.frame_id = MAP_FRAME_ID
 
-            for waypoint in waypoints:
+            for waypoint in lane.waypoints:
                 wp_pose = waypoint.pose.pose
                 self._base_path.poses.append(
                     createPose(wp_pose.position.x, wp_pose.position.y, MAP_FRAME_ID)
