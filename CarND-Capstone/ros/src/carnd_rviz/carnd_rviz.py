@@ -8,6 +8,8 @@ from nav_msgs.msg import Path
 # this controls how many update per second is sent to rviz
 CARND_RVIZ_PUBLISH_RATE = 5
 
+MAP_FRAME_ID = "/world"
+
 def createPose(x, y, frame_id):
     pose = PoseStamped()
     pose.header.frame_id = frame_id
@@ -20,7 +22,6 @@ def createPose(x, y, frame_id):
     pose.pose.orientation.w = 0
     return pose
 
-MAP_FRAME_ID = "/world"
 
 class CarndRviz(object):
     def __init__(self):
@@ -55,6 +56,7 @@ class CarndRviz(object):
                 self._base_path.poses.append(
                     createPose(wp_pose.position.x, wp_pose.position.y, MAP_FRAME_ID)
                 )
+            rospy.loginfo("base path has {} poses".format(len(self._base_path.poses)))
 
         # publish path
         self._path_pub.publish(self._base_path)
