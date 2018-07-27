@@ -57,7 +57,7 @@ class WaypointUpdater(object):
         rate = rospy.Rate(WAYPOINT_PUBLISH_RATE)
 
         while not rospy.is_shutdown():
-            if self.pose and self.base_waypoints:
+            if self.pose is not None and self.base_waypoints is not None:
                 # get closest waypoint
                 closest_waypoint_idx = self.get_closest_waypoint_idx()
                 self.publish_waypoints(closest_waypoint_idx)
