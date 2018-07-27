@@ -119,12 +119,13 @@ class WaypointUpdater(object):
             p.twist.twist.linear.x = min(vel, p.twist.twist.linear.x )
             temp.append(p)
         return temp
-    def waypoints_cb(self, waypoints):
+
+    def waypoints_cb(self, lane):
         # TODO: Implement
-        if not self.base_waypoint:
-            self.base_waypoints = waypoints
+        if not self.base_waypoints:
+            self.base_waypoints = lane
             self.waypoints_2d = [[waypoint.pose.pose.position.x,
-                                  waypoint.pose.pose.position.y] for waypoint in waypoints.waypoints]
+                                  waypoint.pose.pose.position.y] for waypoint in lane.waypoints]
 
             # create KDTree for finding nearest point in 2D
             self.waypoints_tree = KDTree(self.waypoints_2d)
