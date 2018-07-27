@@ -22,6 +22,17 @@ def createPose(x, y, frame_id):
     pose.pose.orientation.w = 0
     return pose
 
+def createPath(waypoints, frame_id):
+    path = Path()
+
+    path.header.frame_id = frame_id
+
+    for waypoint in waypoints:
+        wp_pose = waypoint.pose.pose
+        path.poses.append(
+            createPose(wp_pose.position.x, wp_pose.position.y, MAP_FRAME_ID)
+        )
+    return path
 
 class CarndRviz(object):
     def __init__(self):
@@ -29,10 +40,12 @@ class CarndRviz(object):
 
         # get base waypoints
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
+        rospy.Subscriber("/final_waypoints", Lane, self.final_waypoints_callback)
 
         # publish a path of base waypoints
         # (see http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers#rospy.Publisher_initialization)
         self._path_pub = rospy.Publisher('/carnd_rviz/base_waypoints', Path, queue_size=1, latch=True)
+        self._final_path_pub = rospy.Publisher('/carnd_rviz/final_waypoints', Path, queue_size=1)
 
         # init member
         self._base_path = None
@@ -48,18 +61,15 @@ class CarndRviz(object):
 
     def waypoints_cb(self, lane):
         if self._base_path is None:
-            self._base_path = Path()
-            self._base_path.header.frame_id = MAP_FRAME_ID
-
-            for waypoint in lane.waypoints:
-                wp_pose = waypoint.pose.pose
-                self._base_path.poses.append(
-                    createPose(wp_pose.position.x, wp_pose.position.y, MAP_FRAME_ID)
-                )
+            self._base_path = createPath(lane.waypoints, MAP_FRAME_ID)
             rospy.loginfo("base path has {} poses".format(len(self._base_path.poses)))
 
         # publish path
         self._path_pub.publish(self._base_path)
+
+    def final_waypoints_callback(self, lane):
+        # publish planned waypoints
+        self._final_path_pub.publish(createPath(lane.waypoints, MAP_FRAME_ID))
 
 if __name__ == '__main__':
     try:

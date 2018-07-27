@@ -121,8 +121,8 @@ class WaypointUpdater(object):
         return temp
     def waypoints_cb(self, waypoints):
         # TODO: Implement
-        self.base_waypoints = waypoints
-        if not self.waypoints_2d:
+        if not self.base_waypoint:
+            self.base_waypoints = waypoints
             self.waypoints_2d = [[waypoint.pose.pose.position.x,
                                   waypoint.pose.pose.position.y] for waypoint in waypoints.waypoints]
 
