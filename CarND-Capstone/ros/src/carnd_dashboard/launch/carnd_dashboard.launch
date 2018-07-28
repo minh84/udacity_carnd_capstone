@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="carnd_dashboard" type="carnd_dashboard.py" name="carnd_dashboard" output="screen" cwd="node"/>
+</launch>

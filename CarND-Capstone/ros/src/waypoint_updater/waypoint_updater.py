@@ -3,7 +3,7 @@
 import rospy
 from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
-from std_msgs.msg import Int32
+from std_msgs.msg import Int32, Float64
 from scipy.spatial import KDTree
 import numpy as np
 
@@ -31,9 +31,15 @@ MAX_DECEL = 0.5
 # since it will cause the whole program slow down unbearably
 WAYPOINT_PUBLISH_RATE = 10
 
+def mph_to_mps(mile_per_hour):
+    return 0.447039 * mile_per_hour
+
 class WaypointUpdater(object):
     def __init__(self):
         rospy.init_node('waypoint_updater')
+
+        # get parameters
+        self.speed_limit_mps = mph_to_mps(rospy.get_param('~/waypoint_loader/velocity', 40.0))
 
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
@@ -57,10 +63,11 @@ class WaypointUpdater(object):
         rate = rospy.Rate(WAYPOINT_PUBLISH_RATE)
 
         while not rospy.is_shutdown():
-            if self.pose is not None and self.base_waypoints is not None:
+            if None not in (self.pose , self.base_waypoints, self.waypoints_tree):
                 # get closest waypoint
                 closest_waypoint_idx = self.get_closest_waypoint_idx()
                 self.publish_waypoints(closest_waypoint_idx)
+
             rate.sleep()
 
     def pose_cb(self, msg):
@@ -85,31 +92,36 @@ class WaypointUpdater(object):
 
         return closest_idx
 
-    def publish_waypoints(self, closest_idx):
-        final_lane = self.generate_lane()
+    def publish_waypoints(self, closest_waypoint_idx):
+        final_lane = self.generate_lane(closest_waypoint_idx, closest_waypoint_idx + LOOKAHEAD_WPS)
+
         self.final_waypoints_pub.publish(final_lane)
 
-    def generate_lane(self):
+    def generate_lane(self, wp_start_idx, wp_end_idx):
         lane = Lane()
         lane.header = self.base_waypoints.header
-        closest_idx = self.get_closest_waypoint_idx()
-        lookahead_idx = closest_idx + LOOKAHEAD_WPS
-        base_waypoints = self.base_waypoints.waypoints[closest_idx : lookahead_idx]
+        planned_waypoints = self.base_waypoints.waypoints[wp_start_idx:wp_end_idx]
 
-        if self.stopline_wp_idx==-1 or (self.stopline_wp_idx >= lookahead_idx):
-            lane.waypoints = base_waypoints
+        if self.stopline_wp_idx==-1 or (self.stopline_wp_idx >= wp_end_idx):
+
+            # set max speed
+            for i in range(len(planned_waypoints)):
+                self.set_waypoint_velocity(planned_waypoints, i, self.speed_limit_mps)
+
+            lane.waypoints = planned_waypoints
         else:
-            lane.waypoints = self.decelerate_waypoints(base_waypoints, closest_idx)
+            lane.waypoints = self.decelerate_waypoints(planned_waypoints, wp_start_idx)
         return lane
 
     def decelerate_waypoints(self, waypoints, closest_idx):
+        # we must stop before the red-line index
         stop_idx = max(self.stopline_wp_idx - closest_idx - 2, 0)
-        rospy.loginfo("[waypoint_updater] closest_idx={}, stopline_wp_idx={}".format(closest_idx, self.stopline_wp_idx))
         temp = []
 
         for i, wp in enumerate(waypoints):
             p = Waypoint()
             p.pose = wp.pose
+            p.twist = wp.twist
 
             dist = self.distance(waypoints, i, stop_idx)
             vel = np.sqrt(2 * MAX_DECEL * dist)
