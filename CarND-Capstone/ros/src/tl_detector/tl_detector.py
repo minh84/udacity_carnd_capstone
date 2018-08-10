@@ -22,6 +22,7 @@ class TLDetector(object):
 
         self.pose = None
         self.waypoints = None
+        self.waypoints_tree = None
         self.camera_image = None
         self.lights = []
 
@@ -36,7 +37,9 @@ class TLDetector(object):
         rely on the position of the light and the camera image to predict it.
         '''
         sub3 = rospy.Subscriber('/vehicle/traffic_lights', TrafficLightArray, self.traffic_cb)
-        sub6 = rospy.Subscriber('/image_color', Image, self.image_cb, queue_size=1)
+        sub6 = rospy.Subscriber('/image_color', Image, self.image_cb
+                                , queue_size=1
+                                , buff_size=2 * 52428800)
 
         config_string = rospy.get_param("/traffic_light_config")
         self.config = yaml.load(config_string)
@@ -45,16 +48,13 @@ class TLDetector(object):
         self.distance_to_traffic_light_pub = rospy.Publisher('distance_to_traffic', Float64, queue_size=1)
 
         self.bridge = CvBridge()
-        self.light_classifier = TLClassifier()
+        self.light_classifier = TLClassifier(self.config)
         self.listener = tf.TransformListener()
 
         self.state = TrafficLight.UNKNOWN
         self.last_state = TrafficLight.UNKNOWN
         self.last_wp = -1
         self.state_count = 0
-
-        # other variable
-        self.waypoints_tree = None
 
         rospy.spin()
 
@@ -83,7 +83,10 @@ class TLDetector(object):
 
         """
         self.has_image = True
-        self.camera_image = msg
+
+        # we convert ROS image message to OpenCV format (ref: http://wiki.ros.org/cv_bridge/Tutorials/ConvertingBetweenROSImagesAndOpenCVImagesPython)
+        self.cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+
         light_wp, state, dist = self.process_traffic_lights()
 
         if(dist is not None):
@@ -133,16 +136,17 @@ class TLDetector(object):
         """
 
         # for simulator, we can have state from light
-        return light.state
+        if not self.config['is_site'] and self.config.get('use_sim_light', False):
+            return light.state
+        else:
+            if(not self.has_image):
+                self.prev_light_loc = None
+                return TrafficLight.UNKNOWN
 
-        # if(not self.has_image):
-        #     self.prev_light_loc = None
-        #     return False
-        #
-        # cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
-        #
-        # #Get classification
-        # return self.light_classifier.get_classification(cv_image)
+            #Get classification
+            state = self.light_classifier.get_classification(self.cv_image)
+            rospy.loginfo('Detected light-state {} ground-truth {}'.format(state, light.state))
+            return state
 
     def distance(self, wp1, wp2):
         dist = 0.
