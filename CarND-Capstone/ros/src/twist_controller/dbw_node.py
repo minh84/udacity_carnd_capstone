@@ -72,7 +72,6 @@ class DBWNode(object):
         rospy.Subscriber('/current_velocity', TwistStamped, self.velocity_cb)
 
         self.current_vel = None
-        self.current_angular_vel = None
         self.dbw_enabled = None
         self.linear_vel = None
         self.angular_vel = None

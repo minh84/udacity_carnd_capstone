@@ -6,3 +6,5 @@ camera_info:
 stop_line_positions:
     - [8.0, 16.2]
 is_site: True
+look_ahead_waypoints: 100
+frozen_model_graph: "frozen_real/faster_rcnn_resnet101_coco.pb"

@@ -11,5 +11,6 @@ stop_line_positions:
     - [161.76, 2303.82]
     - [351.84, 1574.65]
 is_site: False
+look_ahead_waypoints: 100
 use_sim_light: False
-frozen_model_graph: "frozen_inference_graph/faster_rcnn_resnet101_coco_sim.pb"
+frozen_model_graph: "frozen_sim/faster_rcnn_resnet101_coco.pb"
