@@ -19,7 +19,7 @@ We feel that this is the most time consuming task. Moreover, since Udacity revie
 * we train *Object Detection model*  using [Object Detection API](https://github.com/tensorflow/models/tree/master/research/object_detection) with Tensorflow 1.8.0: this task is done in this [repository](https://github.com/minh84/udacity_carnd_traffic_light)
 * we export model for inference using Tensorflow 1.3.0: this task is done in this [repository](https://github.com/minh84/carnd_capstone_traffic_light)
 
-We experiment with the three following models
+We experiment with the three following models (specified in `sim_traffic_light_config.yaml` and `site_traffic_light_config.yaml` in field `frozen_model_graph`)
 
 * `ssd_mobilenet_v1_coco`
 * `ssd_inception_v2_coco`
