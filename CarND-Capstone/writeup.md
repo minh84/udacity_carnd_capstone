@@ -30,9 +30,51 @@ Few notes on training for the traffic-light detection
 * the form of the traffic-light has the aspect ratio width/heigh ~ 1/3, so in the pipeline-config we only consider the `aspect-ratio=0.3333`
 * to increse the inference speed we reduce the number of proposing boxes to 10
 
-Note that, we expect that this node is run in less 100ms per cycle, so the inference time must be less than 100ms to be used in real-time traffic light detection. We found that using the native setup  
+Note that, we expect that this node is run in less 500ms per cycle (since it uses `rospy.spin`), so the inference time must be less than 500ms to be used in real-time traffic light detection. The inference and accuracy of the three models are
 
-* without GPU: we can only use `ssd_mobilenet_v1_coco`
+
+* **With CPU only**
+For sim dataset
+
+|  metric    | ssd_mobilenet_v1_coco | ssd_inception_v2_coco | faster_rcnn_resnet101_coco |
+| ---: | :---: | :---: | :---: |
+| accuracy | 97.47% | 97.11%  | 98.92% |
+| min runtime | 64  | 100     | 1554 |
+| max runtime | 90  | 149     | 1932 |
+| mean runtime | 69 | 110     | 1598 |
+
+And for real dataset
+
+|  metric    | ssd_mobilenet_v1_coco | ssd_inception_v2_coco | faster_rcnn_resnet101_coco |
+| ---: | :---: | :---: | :---: |
+| accuracy | 98.11% | 96.86%  | 100% |
+| min runtime | 71  | 107     | 4566 |
+| max runtime | 93  | 135     | 5200 |
+| mean runtime | 82 | 118     | 4660 |
+
+* **With GPU**
+
+For sim dataset
+
+|  metric    | ssd_mobilenet_v1_coco | ssd_inception_v2_coco | faster_rcnn_resnet101_coco |
+| ---: | :---: | :---: | :---: |
+| accuracy | 97.47% | 97.11%  | 98.92% |
+| min runtime | 10  | 14     | 51 |
+| max runtime | 25  | 29     | 70 |
+| mean runtime | 12 | 16     | 56 |
+
+And for real dataset
+
+|  metric    | ssd_mobilenet_v1_coco | ssd_inception_v2_coco | faster_rcnn_resnet101_coco |
+| ---: | :---: | :---: | :---: |
+| accuracy | 98.11% | 96.86%  | 100% |
+| min runtime | 11  | 15     | 108 |
+| max runtime | 20  | 30     | 124 |
+| mean runtime | 13 | 17     | 114 | 
+
+So look at above result  
+
+* without GPU: we should use `ssd_mobilenet_v1_coco`
 * using GPU: both three models can be used and `faster_rcnn_resnet101_coco` is the most stable.
 
 Note that to reduce the CPU/GPU usage, we only turn on the traffic-line detector when the car is close enough to the traffic-line (see `tl_detector.process_traffic_lights` for more detail).
@@ -74,7 +116,16 @@ ROS is great tool in Robotic R&D, here is a few notes that we learnt from doing 
     
     * [rospy.Rate(RATE)](https://github.com/ros/ros_comm/blob/kinetic-devel/clients/rospy/src/rospy/timer.py): is a custom loop where we can control the frequency via input `RATE` (50 means 50 times per second).  
 
-## Conclusion
+When testing the real ROS-bag, we need to install `jsk_visualization` via
+```bash
+sudo apt install ros-kinetic-jsk-visualization
+``` 
 
+## Conclusion
+Going through this project we learn how to implement a real self-driving car which applied what we learnt from Term 1 through to Term 3. This is a great experience to start into the Self-Car-Driving field. There is so much more to do after this for example one can train model on Bosch traffic light data or experiment it with a car-kit.
  
- 
+
+## Attributions
+We learnt a great deal from the following blogs
+- [becominghuman blog](https://becominghuman.ai/traffic-light-detection-tensorflow-api-c75fdbadac62)
+- [anthony_sarkis blog](https://medium.com/@anthony_sarkis/self-driving-cars-implementing-real-time-traffic-light-detection-and-classification-in-2017-7d9ae8df1c58)

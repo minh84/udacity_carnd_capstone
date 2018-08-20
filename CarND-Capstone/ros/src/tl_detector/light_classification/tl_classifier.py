@@ -28,6 +28,13 @@ class TLClassifier(object):
                             3: TrafficLight.GREEN,
                             4: TrafficLight.UNKNOWN}
 
+        self.state_map = {
+            TrafficLight.RED : 'Red',
+            TrafficLight.YELLOW : 'Yellow',
+            TrafficLight.GREEN : 'Green',
+            TrafficLight.UNKNOWN : 'NoTrafficLight'
+        }
+
     def load_model(self, model_path):
         # load serialized Tensor Graph
         self.graph = tf.Graph()
@@ -61,6 +68,9 @@ class TLClassifier(object):
                 self.image_tensor: np.expand_dims(null_img, axis=0)
             }
         )
+
+    def get_state_name(self, state):
+        return self.state_map[state]
 
     def get_classification(self, cv_image):
         """Determines the color of the traffic light in the image

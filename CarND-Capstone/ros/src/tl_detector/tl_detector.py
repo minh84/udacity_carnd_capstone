@@ -164,7 +164,10 @@ class TLDetector(object):
             # Get classification
             state = self.light_classifier.get_classification(cv_image)
             if not self.config['is_site']:
-                rospy.loginfo('Detected light-state {} ground-truth {}'.format(state, light.state))
+                rospy.loginfo('Detected light-state [{}] v.s ground-truth [{}]'.format(self.light_classifier.get_state_name(state),
+                                                                               self.light_classifier.get_state_name(light.state)))
+            else:
+                rospy.loginfo('Detected light-state [{}]'.format(self.light_classifier.get_state_name(state)))
             return state
 
     def distance(self, wp1, wp2):
