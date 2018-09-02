@@ -1,12 +1,10 @@
-from yaw_controller import YawController
-from pid import PID
-from lowpass import LowPassFilter
-
 import rospy
 
-GAS_DENSITY = 2.858
-ONE_MPH = 0.44704
+from lowpass import LowPassFilter
+from pid import PID
+from yaw_controller import YawController
 
+GAS_DENSITY = 2.858
 
 class Controller(object):
     def __init__(self,
@@ -22,6 +20,14 @@ class Controller(object):
                  max_steer_angle):
         # TODO: Implement
 
+        # store car's parameter
+        self.brake_deadband = brake_deadband
+        self.decel_limit = decel_limit
+        self.accel_limit = accel_limit
+        self.wheel_radius = wheel_radius
+
+        self.total_mass = vehicle_mass + fuel_capacity * GAS_DENSITY
+
         # control steering angle
         self.yaw_controller = YawController(wheel_base,
                                             steer_ratio,
@@ -30,28 +36,14 @@ class Controller(object):
                                             max_steer_angle)
 
         # control throttle
-        kp = 0.5
-        ki = 0.00001
+        kp = 1.5
+        ki = 0.001
         kd = 0.0
-        throttle_min = 0.0
-        throttle_max = 1.0
-        self.throttle_controller = PID(kp, ki, kd, throttle_min, throttle_max)
-
-        # smooth out velocity
-        tau = 0.5  # cut off frequency
-        ts = 0.02  # sample duration (50Hz)
-        self.velocity_lpf = LowPassFilter(tau, ts)
-
-        # store car's parameter
-        self.vehicle_mass = vehicle_mass
-        self.fuel_capacity = fuel_capacity
-        self.brake_deadband = brake_deadband
-        self.decel_limit = decel_limit
-        self.accel_limit = accel_limit
-        self.wheel_radius = wheel_radius
+        self.throttle_controller = PID(kp, ki, kd,
+                                       self.decel_limit,
+                                       self.accel_limit)
 
         self.last_time = rospy.get_time()
-
 
     def control(self,
                 current_vel,
@@ -65,9 +57,6 @@ class Controller(object):
             self.throttle_controller.reset()
             return 0., 0., 0.
 
-        # smooth out velocity
-        current_vel = self.velocity_lpf.filt(current_vel)
-
         # compute steering
         steering = self.yaw_controller.get_steering(linear_vel, angular_vel, current_vel)
 
@@ -79,6 +68,7 @@ class Controller(object):
         sample_time = current_time - self.last_time
         self.last_time = current_time
 
+        # throttle is acceleration
         throttle = self.throttle_controller.step(error_vel, sample_time)
 
         # compute brake
@@ -90,7 +80,6 @@ class Controller(object):
         elif throttle < 0.1 and error_vel < 0.:
             throttle = 0.0
             decel = max(error_vel, self.decel_limit)
-            brake = abs(decel) * self.vehicle_mass * self.wheel_radius
+            brake = abs(decel) * self.total_mass * self.wheel_radius
 
-        return  throttle, brake, steering
-
+        return throttle, brake, steering
